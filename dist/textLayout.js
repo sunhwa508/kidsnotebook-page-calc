@@ -1,8 +1,51 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.measureTextWidth = measureTextWidth;
 exports.calculateTextLines = calculateTextLines;
 exports.splitTextByLines = splitTextByLines;
+const canvas_1 = require("canvas");
+const path = __importStar(require("path"));
+// Pretendard 폰트 등록 (브라우저와 동일한 텍스트 측정)
+const fontPath = path.resolve(__dirname, '..', 'fonts', 'Pretendard-Regular.otf');
+try {
+    (0, canvas_1.registerFont)(fontPath, { family: 'Pretendard' });
+}
+catch {
+    // 폰트 파일 없으면 fallback 사용
+}
 const HALF_WIDTH_RATIO = 0.6;
 const FULL_WIDTH_RATIO = 1.0;
 const SPACE_WIDTH_RATIO = 0.3;
@@ -47,12 +90,40 @@ const countLinesByChars = (paragraph, maxWidth, fontSize, startWidth = 0) => {
     }
     return { lines, lineWidth };
 };
-/**
- * Node.js 환경에서는 Canvas가 없으므로 문자 폭 비율 기반으로 측정
- */
+// CSS .textItem p의 font-family와 일치
+const DEFAULT_FONT_FAMILY = "'Pretendard', 'Tossface', 'Noto Color Emoji', -apple-system, BlinkMacSystemFont, sans-serif";
+const textWidthCache = new Map();
+let measureCtx = null;
+function getMeasureContext(fontSize) {
+    if (!measureCtx) {
+        const canvas = (0, canvas_1.createCanvas)(1, 1);
+        measureCtx = canvas.getContext('2d');
+    }
+    if (measureCtx) {
+        measureCtx.font = `${fontSize}px ${DEFAULT_FONT_FAMILY}`;
+    }
+    return measureCtx;
+}
 function measureTextWidth(text, fontSize) {
     if (text.length === 0)
         return 0;
+    if (text.length === 1) {
+        const cacheKey = `${fontSize}-${text}`;
+        const cached = textWidthCache.get(cacheKey);
+        if (cached !== undefined)
+            return cached;
+        const ctx = getMeasureContext(fontSize);
+        if (ctx) {
+            const width = ctx.measureText(text).width;
+            textWidthCache.set(cacheKey, width);
+            return width;
+        }
+    }
+    const ctx = getMeasureContext(fontSize);
+    if (ctx) {
+        return ctx.measureText(text).width;
+    }
+    // fallback: 문자 비율 근사치
     let width = 0;
     for (const char of text) {
         const code = char.charCodeAt(0);

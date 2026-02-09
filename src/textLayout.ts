@@ -1,3 +1,14 @@
+import { createCanvas, registerFont } from 'canvas';
+import * as path from 'path';
+
+// Pretendard 폰트 등록 (브라우저와 동일한 텍스트 측정)
+const fontPath = path.resolve(__dirname, '..', 'fonts', 'Pretendard-Regular.otf');
+try {
+  registerFont(fontPath, { family: 'Pretendard' });
+} catch {
+  // 폰트 파일 없으면 fallback 사용
+}
+
 const HALF_WIDTH_RATIO = 0.6;
 const FULL_WIDTH_RATIO = 1.0;
 const SPACE_WIDTH_RATIO = 0.3;
@@ -55,12 +66,44 @@ const countLinesByChars = (
   return { lines, lineWidth };
 };
 
-/**
- * Node.js 환경에서는 Canvas가 없으므로 문자 폭 비율 기반으로 측정
- */
+// CSS .textItem p의 font-family와 일치
+const DEFAULT_FONT_FAMILY =
+  "'Pretendard', 'Tossface', 'Noto Color Emoji', -apple-system, BlinkMacSystemFont, sans-serif";
+const textWidthCache = new Map<string, number>();
+let measureCtx: ReturnType<ReturnType<typeof createCanvas>['getContext']> | null = null;
+
+function getMeasureContext(fontSize: number) {
+  if (!measureCtx) {
+    const canvas = createCanvas(1, 1);
+    measureCtx = canvas.getContext('2d');
+  }
+  if (measureCtx) {
+    measureCtx.font = `${fontSize}px ${DEFAULT_FONT_FAMILY}`;
+  }
+  return measureCtx;
+}
+
 export function measureTextWidth(text: string, fontSize: number): number {
   if (text.length === 0) return 0;
 
+  if (text.length === 1) {
+    const cacheKey = `${fontSize}-${text}`;
+    const cached = textWidthCache.get(cacheKey);
+    if (cached !== undefined) return cached;
+    const ctx = getMeasureContext(fontSize);
+    if (ctx) {
+      const width = ctx.measureText(text).width;
+      textWidthCache.set(cacheKey, width);
+      return width;
+    }
+  }
+
+  const ctx = getMeasureContext(fontSize);
+  if (ctx) {
+    return ctx.measureText(text).width;
+  }
+
+  // fallback: 문자 비율 근사치
   let width = 0;
   for (const char of text) {
     const code = char.charCodeAt(0);
