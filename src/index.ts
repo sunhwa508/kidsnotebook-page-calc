@@ -63,6 +63,7 @@ function filterAlbums(
 
 /**
  * is_selected: false인 항목을 hiddenIds로 변환
+ * (프론트엔드 extractInitialDeselectedIds와 동일 로직)
  */
 function buildHiddenIdsFromSelection(
   reports: WorkspaceReport[],
@@ -76,36 +77,27 @@ function buildHiddenIdsFromSelection(
     const date = toKstDateString(report.created);
     const reportId = String(report.id);
 
-    // 알림장 자체가 is_selected: false → 텍스트, 이미지, 댓글, 생활기록 모두 숨김
+    // 텍스트: report.is_selected로 판단
     if (!report.is_selected) {
       hiddenSet.add(`text-${reportId}-${date}`);
-      const mediaCount =
-        (report.videos?.length ?? 0) + (report.images?.length ?? 0);
-      for (let i = 0; i < mediaCount; i++) {
-        hiddenSet.add(`report-${reportId}-img-${date}-${i}`);
-      }
-      (report.comments ?? []).forEach((_, idx) => {
-        hiddenSet.add(`comment-${reportId}-${date}-${idx}`);
-      });
-      continue;
     }
 
-    // 개별 이미지 is_selected 체크
-    let mediaIdx = 0;
-    (report.videos ?? []).forEach((video) => {
+    // 비디오 썸네일: 개별 is_selected 체크 (인덱스 0부터)
+    (report.videos ?? []).forEach((video, idx) => {
       if (!video.is_selected) {
-        hiddenSet.add(`report-${reportId}-img-${date}-${mediaIdx}`);
+        hiddenSet.add(`report-${reportId}-img-${date}-${idx}`);
       }
-      mediaIdx++;
-    });
-    (report.images ?? []).forEach((img) => {
-      if (!img.is_selected) {
-        hiddenSet.add(`report-${reportId}-img-${date}-${mediaIdx}`);
-      }
-      mediaIdx++;
     });
 
-    // 개별 댓글 is_selected 체크
+    // 이미지: 개별 is_selected 체크 (비디오 뒤 인덱스)
+    const videoOffset = report.videos?.length ?? 0;
+    (report.images ?? []).forEach((img, idx) => {
+      if (!img.is_selected) {
+        hiddenSet.add(`report-${reportId}-img-${date}-${videoOffset + idx}`);
+      }
+    });
+
+    // 댓글: 개별 is_selected 체크
     (report.comments ?? []).forEach((comment, idx) => {
       if (!comment.is_selected) {
         hiddenSet.add(`comment-${reportId}-${date}-${idx}`);
@@ -118,27 +110,19 @@ function buildHiddenIdsFromSelection(
     const date = toKstDateString(album.created);
     const albumId = String(album.id);
 
-    if (!album.is_selected) {
-      const mediaCount =
-        (album.videos?.length ?? 0) + (album.images?.length ?? 0);
-      for (let i = 0; i < mediaCount; i++) {
-        hiddenSet.add(`album-${albumId}-img-${date}-${i}`);
-      }
-      continue;
-    }
-
-    let mediaIdx = 0;
-    (album.videos ?? []).forEach((video) => {
+    // 비디오 썸네일: 개별 is_selected 체크
+    (album.videos ?? []).forEach((video, idx) => {
       if (!video.is_selected) {
-        hiddenSet.add(`album-${albumId}-img-${date}-${mediaIdx}`);
+        hiddenSet.add(`album-${albumId}-img-${date}-${idx}`);
       }
-      mediaIdx++;
     });
-    (album.images ?? []).forEach((img) => {
+
+    // 이미지: 개별 is_selected 체크 (비디오 뒤 인덱스)
+    const videoOffset = album.videos?.length ?? 0;
+    (album.images ?? []).forEach((img, idx) => {
       if (!img.is_selected) {
-        hiddenSet.add(`album-${albumId}-img-${date}-${mediaIdx}`);
+        hiddenSet.add(`album-${albumId}-img-${date}-${videoOffset + idx}`);
       }
-      mediaIdx++;
     });
   }
 
