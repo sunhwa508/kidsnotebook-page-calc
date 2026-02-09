@@ -1,0 +1,17 @@
+{
+  "name": "kidsnotebook-page-calc",
+  "version": "1.0.0",
+  "description": "키즈노트북 페이지 계산 CLI",
+  "main": "dist/index.js",
+  "bin": {
+    "kidsnotebook-page-calc": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/cli.js"
+  },
+  "devDependencies": {
+    "@types/node": "^25.2.2",
+    "typescript": "^5.3.0"
+  }
+}
