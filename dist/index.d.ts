@@ -1,8 +1,16 @@
 import { WorkspaceReport, WorkspaceAlbum } from './types';
+export interface FilterSettings {
+    excludeAlbum?: boolean;
+    excludeReport?: boolean;
+    excludeHomeReport?: boolean;
+    excludeNoPhotoReport?: boolean;
+    excludeComment?: boolean;
+}
 export interface CalcPagesInput {
     reports: WorkspaceReport[];
     albums: WorkspaceAlbum[];
     hiddenIds?: string[];
+    filter?: FilterSettings;
 }
 export interface CalcPagesOutput {
     totalPages: number;
