@@ -118,6 +118,7 @@ export interface WorkspaceReport {
   content: string;
   author: WorkspaceAuthor;
   is_selected: boolean;
+  is_day_selected?: boolean;
   is_sent_from_center: boolean;
   weather: string;
   life_log: LifeLog;
@@ -134,6 +135,7 @@ export interface WorkspaceAlbum {
   title: string;
   author_name: string;
   is_selected: boolean;
+  is_day_selected?: boolean;
   images: WorkspaceImage[];
   videos: WorkspaceVideo[];
 }

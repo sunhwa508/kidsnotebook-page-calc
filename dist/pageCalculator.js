@@ -61,12 +61,20 @@ function extractUniqueMonthsByType(pages) {
 function calculateTotalPageCount(pages) {
     if (pages.length === 0)
         return 0;
-    const uniqueMonths = extractUniqueMonths(pages);
     const { reportMonths, albumMonths } = extractUniqueMonthsByType(pages);
     const indexPageCount = calculateIndexPageCount(reportMonths.length, albumMonths.length);
     const cover = 1;
     const outro = 1;
-    const sectionCovers = uniqueMonths.length;
+    // 실제 월 전환 횟수 기준으로 섹션 커버 카운트 (알림장→앨범 전환 포함)
+    let sectionCovers = 0;
+    let lastMonth = null;
+    for (const page of pages) {
+        const month = getPageMonth(page);
+        if (month && month !== lastMonth) {
+            sectionCovers++;
+            lastMonth = month;
+        }
+    }
     const innerPages = pages.length;
     return cover + indexPageCount + sectionCovers + innerPages + outro;
 }

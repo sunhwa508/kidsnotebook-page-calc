@@ -60,6 +60,7 @@ const VIDEO_THUMBNAIL_SIZE = 640;
 const MONTH_FIRST_CONTENT_START = KN_BOOK_SIZE.MONTH_FIRST_CONTENT_START;
 const LIFE_LOG_HEIGHT = 38;
 const LIFE_LOG_GAP = 8;
+const LIFE_LOG_GAP_MEDIA_ONLY = 4;
 
 const getTextLines = (text: string): number =>
   calculateTextLines(text, TEXT_CONTENT_WIDTH, TEXT_FONT_SIZE);
@@ -149,7 +150,10 @@ class PageBuilder {
     lifeLog: LifeLog | undefined,
     reportId: string,
     date: string,
+    gap: number = LIFE_LOG_GAP,
   ): void {
+    const lifeLogId = `life-log-${reportId}-${date}`;
+    if (this.isHidden(lifeLogId)) return;
     if (!lifeLog) return;
     const hasContent = LIFE_LOG_KEYS.some((key) => {
       const value = lifeLog[key];
@@ -157,7 +161,7 @@ class PageBuilder {
     });
     if (!hasContent) return;
 
-    const requiredHeight = LIFE_LOG_HEIGHT + LIFE_LOG_GAP;
+    const requiredHeight = LIFE_LOG_HEIGHT + gap;
     const maxHeight = this.getPageMaxHeight();
     if (
       this.currentY + requiredHeight > maxHeight &&
@@ -166,7 +170,7 @@ class PageBuilder {
       this.startNewPageWithHeaderCarry();
     }
 
-    const itemY = this.currentY + LIFE_LOG_GAP;
+    const itemY = this.currentY + gap;
     this.currentPageItems.push({
       id: `life-log-${reportId}-${date}`,
       type: 'life-log',
@@ -809,12 +813,16 @@ export function generatePages(
 
   for (const report of reports) {
     if (!report.created) continue;
+    if (report.is_day_selected === false) continue;
     const date = toKstDateString(report.created);
     const reportId = String(report.id);
     const month = date.substring(0, 7);
 
     const textHiddenKey = `text-${reportId}-${date}`;
-    const hasVisibleText = report.content && !hiddenSet.has(textHiddenKey);
+    const hasVisibleText =
+      report.is_selected !== false &&
+      report.content &&
+      !hiddenSet.has(textHiddenKey);
     const reportMediaCount =
       (report.videos?.length ?? 0) + (report.images?.length ?? 0);
     const hasVisibleMedia =
@@ -827,10 +835,13 @@ export function generatePages(
       report.comments.some(
         (_, idx) => !hiddenSet.has(`comment-${reportId}-${date}-${idx}`),
       );
-    const hasVisibleLifeLog = LIFE_LOG_KEYS.some((key) => {
-      const value = report.life_log?.[key];
-      return value && value !== '';
-    });
+    const lifeLogHiddenKey = `life-log-${reportId}-${date}`;
+    const hasVisibleLifeLog =
+      !hiddenSet.has(lifeLogHiddenKey) &&
+      LIFE_LOG_KEYS.some((key) => {
+        const value = report.life_log?.[key];
+        return value && value !== '';
+      });
 
     if (
       !hasVisibleText &&
@@ -901,9 +912,17 @@ export function generatePages(
       builder.addImages(reportMedia, date, `report-${reportId}-img`);
     }
 
-    builder.addText(report.content, date, reportId);
+    if (report.is_selected !== false) {
+      builder.addText(report.content, date, reportId);
+    }
 
-    builder.addLifeLogItem(report.life_log, reportId, date);
+    {
+      const lifeLogGap =
+        hasVisibleMedia && !hasVisibleText && !hasVisibleComments
+          ? LIFE_LOG_GAP_MEDIA_ONLY
+          : LIFE_LOG_GAP;
+      builder.addLifeLogItem(report.life_log, reportId, date, lifeLogGap);
+    }
 
     if (report.comments && report.comments.length > 0) {
       const commentsData = report.comments.map((comment) => ({
@@ -922,6 +941,7 @@ export function generatePages(
 
   for (const album of albums) {
     if (!album.created) continue;
+    if (album.is_day_selected === false) continue;
     const date = toKstDateString(album.created);
     const albumId = String(album.id);
     const month = date.substring(0, 7);

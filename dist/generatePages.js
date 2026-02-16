@@ -32,6 +32,7 @@ const VIDEO_THUMBNAIL_SIZE = 640;
 const MONTH_FIRST_CONTENT_START = types_1.KN_BOOK_SIZE.MONTH_FIRST_CONTENT_START;
 const LIFE_LOG_HEIGHT = 38;
 const LIFE_LOG_GAP = 8;
+const LIFE_LOG_GAP_MEDIA_ONLY = 4;
 const getTextLines = (text) => (0, textLayout_1.calculateTextLines)(text, layoutConstants_1.TEXT_CONTENT_WIDTH, layoutConstants_1.TEXT_FONT_SIZE);
 const getCommentLines = (text, maxWidth) => (0, textLayout_1.calculateTextLines)(text, Math.floor(maxWidth * COMMENT_MAX_WIDTH_RATIO), layoutConstants_1.COMMENT_FONT_SIZE);
 function calculateCommentHeight(text, maxWidth, isContinuation = false) {
@@ -89,7 +90,10 @@ class PageBuilder {
     isHidden(itemId) {
         return this.hiddenIds.has(itemId);
     }
-    addLifeLogItem(lifeLog, reportId, date) {
+    addLifeLogItem(lifeLog, reportId, date, gap = LIFE_LOG_GAP) {
+        const lifeLogId = `life-log-${reportId}-${date}`;
+        if (this.isHidden(lifeLogId))
+            return;
         if (!lifeLog)
             return;
         const hasContent = lifeLog_1.LIFE_LOG_KEYS.some((key) => {
@@ -98,13 +102,13 @@ class PageBuilder {
         });
         if (!hasContent)
             return;
-        const requiredHeight = LIFE_LOG_HEIGHT + LIFE_LOG_GAP;
+        const requiredHeight = LIFE_LOG_HEIGHT + gap;
         const maxHeight = this.getPageMaxHeight();
         if (this.currentY + requiredHeight > maxHeight &&
             this.currentPageItems.length > 0) {
             this.startNewPageWithHeaderCarry();
         }
-        const itemY = this.currentY + LIFE_LOG_GAP;
+        const itemY = this.currentY + gap;
         this.currentPageItems.push({
             id: `life-log-${reportId}-${date}`,
             type: 'life-log',
@@ -606,20 +610,26 @@ function generatePages(reports, albums, hiddenIds = []) {
     for (const report of reports) {
         if (!report.created)
             continue;
+        if (report.is_day_selected === false)
+            continue;
         const date = (0, kstDate_1.toKstDateString)(report.created);
         const reportId = String(report.id);
         const month = date.substring(0, 7);
         const textHiddenKey = `text-${reportId}-${date}`;
-        const hasVisibleText = report.content && !hiddenSet.has(textHiddenKey);
+        const hasVisibleText = report.is_selected !== false &&
+            report.content &&
+            !hiddenSet.has(textHiddenKey);
         const reportMediaCount = (report.videos?.length ?? 0) + (report.images?.length ?? 0);
         const hasVisibleMedia = reportMediaCount > 0 &&
             Array.from({ length: reportMediaCount }).some((_, idx) => !hiddenSet.has(`report-${reportId}-img-${date}-${idx}`));
         const hasVisibleComments = report.comments &&
             report.comments.some((_, idx) => !hiddenSet.has(`comment-${reportId}-${date}-${idx}`));
-        const hasVisibleLifeLog = lifeLog_1.LIFE_LOG_KEYS.some((key) => {
-            const value = report.life_log?.[key];
-            return value && value !== '';
-        });
+        const lifeLogHiddenKey = `life-log-${reportId}-${date}`;
+        const hasVisibleLifeLog = !hiddenSet.has(lifeLogHiddenKey) &&
+            lifeLog_1.LIFE_LOG_KEYS.some((key) => {
+                const value = report.life_log?.[key];
+                return value && value !== '';
+            });
         if (!hasVisibleText &&
             !hasVisibleMedia &&
             !hasVisibleComments &&
@@ -673,8 +683,15 @@ function generatePages(reports, albums, hiddenIds = []) {
         if (reportMedia.length > 0) {
             builder.addImages(reportMedia, date, `report-${reportId}-img`);
         }
-        builder.addText(report.content, date, reportId);
-        builder.addLifeLogItem(report.life_log, reportId, date);
+        if (report.is_selected !== false) {
+            builder.addText(report.content, date, reportId);
+        }
+        {
+            const lifeLogGap = hasVisibleMedia && !hasVisibleText && !hasVisibleComments
+                ? LIFE_LOG_GAP_MEDIA_ONLY
+                : LIFE_LOG_GAP;
+            builder.addLifeLogItem(report.life_log, reportId, date, lifeLogGap);
+        }
         if (report.comments && report.comments.length > 0) {
             const commentsData = report.comments.map((comment) => ({
                 id: String(comment.id ?? ''),
@@ -689,6 +706,8 @@ function generatePages(reports, albums, hiddenIds = []) {
     builder.startNewPage();
     for (const album of albums) {
         if (!album.created)
+            continue;
+        if (album.is_day_selected === false)
             continue;
         const date = (0, kstDate_1.toKstDateString)(album.created);
         const albumId = String(album.id);
