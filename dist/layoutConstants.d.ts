@@ -23,3 +23,25 @@ export declare const COMMENT_FONT_SIZE = 12;
 export declare const COMMENT_LINE_HEIGHT = 18;
 export declare const COMMENT_HEADER_HEIGHT = 20;
 export declare const COMMENT_PADDING = 27;
+export declare const OFFSET_SIZES: readonly [{
+    readonly name: "sm";
+    readonly width: 112;
+    readonly height: 300;
+    readonly variants: 3;
+}, {
+    readonly name: "md";
+    readonly width: 172;
+    readonly height: 300;
+    readonly variants: 3;
+}, {
+    readonly name: "lg";
+    readonly width: 232;
+    readonly height: 300;
+    readonly variants: 2;
+}, {
+    readonly name: "xl";
+    readonly width: 292;
+    readonly height: 300;
+    readonly variants: 3;
+}];
+export declare const MIN_OFFSET_WIDTH: 112;

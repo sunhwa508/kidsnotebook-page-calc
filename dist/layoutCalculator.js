@@ -1,7 +1,7 @@
 "use strict";
 /**
  * 이미지 레이아웃 계산 유틸리티
- * GoogleLayout_v1 알고리즘 (silver_bullet 백엔드와 동일)
+ * GoogleLayout_v1 알고리즘 (kidsnote-web-store와 동일)
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.calculateJustifiedGridLayout = calculateJustifiedGridLayout;
@@ -74,12 +74,8 @@ const isExtremeRatio = (ratio) => ratio >= EXTREME_IMAGE_RATIO || ratio <= 1 / E
 const MAX_SUM_RATIO = 3.5;
 const MAX_SCORE = 4;
 const MERGE_ROW_MIN_HEIGHT = Math.max(MIN_ROW_HEIGHT * 1.15, MIN_ROW_HEIGHT + 24);
-const OFFSET_SIZES = {
-    sm: { width: 93, height: 295 },
-};
-const MIN_OFFSET_WIDTH = OFFSET_SIZES.sm.width;
-const OFFSET_GAP = 6;
-const DEAD_SPACE_THRESHOLD = MIN_OFFSET_WIDTH + OFFSET_GAP;
+const OFFSET_GAP = 2;
+const DEAD_SPACE_THRESHOLD = layoutConstants_1.MIN_OFFSET_WIDTH + OFFSET_GAP;
 function buildGoogleLayoutRows(images, maxWidth, minHeight, maxHeight, hGap, preserveOrder) {
     const rows = [];
     const maxR = maxWidth / minHeight;
@@ -348,20 +344,30 @@ function adjustRowHeightForDeadSpace(images, rowHeight, containerWidth) {
     const gapWidth = GAP * (images.length - 1);
     const rowWidth = totalImageWidth + gapWidth;
     const deadSpace = containerWidth - rowWidth;
-    if (deadSpace <= 0 || deadSpace >= DEAD_SPACE_THRESHOLD) {
-        return rowHeight;
-    }
-    const MIN_OFFSET_HEIGHT = OFFSET_SIZES.sm.height;
-    if (rowHeight >= MIN_OFFSET_HEIGHT) {
+    if (deadSpace > 0) {
+        // 데드스페이스 있음 → 확대해서 채우기 시도
+        const targetTotalWidth = containerWidth - gapWidth;
+        const expandedHeight = targetTotalWidth / sumRatio;
+        if (expandedHeight <= MAX_ROW_HEIGHT) {
+            // 확대해도 높이 허용 범위 → 데드스페이스 제거
+            return expandedHeight;
+        }
+        // 확대하면 너무 높아짐 → 축소해서 offset 공간 확보
+        if (deadSpace >= DEAD_SPACE_THRESHOLD) {
+            return rowHeight; // 이미 offset 들어갈 공간 충분
+        }
         const additionalSpaceNeeded = DEAD_SPACE_THRESHOLD - deadSpace;
         const shrinkRatio = (totalImageWidth - additionalSpaceNeeded) / totalImageWidth;
-        const newHeight = rowHeight * shrinkRatio;
-        return newHeight;
+        if (shrinkRatio <= 0)
+            return rowHeight;
+        return Math.max(MIN_ROW_HEIGHT, rowHeight * shrinkRatio);
     }
-    const targetTotalWidth = containerWidth - gapWidth;
-    const expandRatio = targetTotalWidth / totalImageWidth;
-    const newHeight = rowHeight * expandRatio;
-    return newHeight;
+    // 데드스페이스 없음 (행이 꽉 차거나 넘침) → 오버플로우만 보정
+    if (deadSpace < 0) {
+        const targetTotalWidth = containerWidth - gapWidth;
+        return targetTotalWidth / sumRatio;
+    }
+    return rowHeight;
 }
 function calculateJustifiedGridLayout(images, options) {
     if (images.length === 0)

@@ -1,6 +1,6 @@
 /**
  * 이미지 레이아웃 계산 유틸리티
- * GoogleLayout_v1 알고리즘 (silver_bullet 백엔드와 동일)
+ * GoogleLayout_v1 알고리즘 (kidsnote-web-store와 동일)
  */
 interface ImageDimension {
     url: string;

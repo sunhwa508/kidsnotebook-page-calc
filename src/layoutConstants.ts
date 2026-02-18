@@ -34,3 +34,13 @@ export const COMMENT_FONT_SIZE = 12;
 export const COMMENT_LINE_HEIGHT = 18;
 export const COMMENT_HEADER_HEIGHT = 20;
 export const COMMENT_PADDING = 27;
+
+// offset 표시 크기 (원본 비율 유지, scale factor: 0.28)
+export const OFFSET_SIZES = [
+  { name: 'sm', width: 112, height: 300, variants: 3 },
+  { name: 'md', width: 172, height: 300, variants: 3 },
+  { name: 'lg', width: 232, height: 300, variants: 2 },
+  { name: 'xl', width: 292, height: 300, variants: 3 },
+] as const;
+
+export const MIN_OFFSET_WIDTH = OFFSET_SIZES[0].width; // sm = 112
