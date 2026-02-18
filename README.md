@@ -11,13 +11,16 @@ git submodule add https://github.com/sunhwa508/kidsnotebook-page-calc.git
 ## 사용법
 
 ```bash
-# JSON 파일 입력
+# silver_bullet 루트에서 실행 (권장)
+./shell_script/kidsnotebook_page_calc.sh ./kidsnotebook-page-calc/test-input.json
+
+# JSON 파일 입력 (직접 실행)
 node kidsnotebook-page-calc/dist/cli.js input.json
 
-# stdin 입력
+# stdin 입력 (직접 실행)
 cat input.json | node kidsnotebook-page-calc/dist/cli.js
 
-# 파이프라인 예시
+# 파이프라인 예시 (직접 실행)
 echo '{"reports":[], "albums":[]}' | node kidsnotebook-page-calc/dist/cli.js
 ```
 
