@@ -11,6 +11,8 @@ export interface CalcPagesInput {
     albums: WorkspaceAlbum[];
     hiddenIds?: string[];
     filter?: FilterSettings;
+    /** user_data.selected_filter_type으로 저장된 필터 (filter의 alias) */
+    selected_filter_type?: FilterSettings;
 }
 export interface CalcPagesOutput {
     totalPages: number;

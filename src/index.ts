@@ -16,6 +16,8 @@ export interface CalcPagesInput {
   albums: WorkspaceAlbum[];
   hiddenIds?: string[];
   filter?: FilterSettings;
+  /** user_data.selected_filter_type으로 저장된 필터 (filter의 alias) */
+  selected_filter_type?: FilterSettings;
 }
 
 export interface CalcPagesOutput {
@@ -157,7 +159,12 @@ function buildHiddenIdsFromSelection(
 }
 
 export function calcPages(input: CalcPagesInput): CalcPagesOutput {
-  const { reports, albums, hiddenIds = [], filter = {} } = input;
+  const {
+    reports,
+    albums,
+    hiddenIds = [],
+    filter = input.selected_filter_type ?? {},
+  } = input;
 
   // 1. 필터 설정 적용 (앨범 제거, 가정 알림장 제거 등)
   const filteredBySettings = {
