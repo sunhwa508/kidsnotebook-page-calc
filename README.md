@@ -2,26 +2,36 @@
 
 키즈노트북 페이지 계산 CLI. 알림장/앨범 데이터를 입력받아 총 페이지 수를 계산합니다.
 
-## 설치 (git submodule)
+## 사용법 (npx)
+
+설치 없이 바로 실행:
+
+```bash
+# JSON 파일 입력
+npx github:sunhwa508/kidsnotebook-page-calc input.json
+
+# stdin 입력
+cat input.json | npx github:sunhwa508/kidsnotebook-page-calc
+
+# 파이프라인 예시
+echo '{"reports":[], "albums":[]}' | npx github:sunhwa508/kidsnotebook-page-calc
+```
+
+## 설치 (선택)
+
+### git submodule
 
 ```bash
 git submodule add https://github.com/sunhwa508/kidsnotebook-page-calc.git
+
+# 직접 실행
+node kidsnotebook-page-calc/dist/cli.js input.json
 ```
 
-## 사용법
+### silver_bullet 연동
 
 ```bash
-# silver_bullet 루트에서 실행 (권장)
 ./shell_script/kidsnotebook_page_calc.sh ./kidsnotebook-page-calc/test-input.json
-
-# JSON 파일 입력 (직접 실행)
-node kidsnotebook-page-calc/dist/cli.js input.json
-
-# stdin 입력 (직접 실행)
-cat input.json | node kidsnotebook-page-calc/dist/cli.js
-
-# 파이프라인 예시 (직접 실행)
-echo '{"reports":[], "albums":[]}' | node kidsnotebook-page-calc/dist/cli.js
 ```
 
 ## 입력 형식 (JSON)
@@ -226,7 +236,7 @@ echo '{"reports":[], "albums":[]}' | node kidsnotebook-page-calc/dist/cli.js
 실행:
 
 ```bash
-node kidsnotebook-page-calc/dist/cli.js example.json
+npx github:sunhwa508/kidsnotebook-page-calc example.json
 ```
 
 출력:
@@ -298,7 +308,7 @@ def verify_page_count(cart_data: dict, claimed_pages: int) -> dict:
         {"valid": True/False, "calculated": int, "claimed": int}
     """
     result = subprocess.run(
-        ['node', 'kidsnotebook-page-calc/dist/cli.js'],
+        ['npx', 'github:sunhwa508/kidsnotebook-page-calc'],
         input=json.dumps(cart_data),
         capture_output=True,
         text=True,
@@ -357,8 +367,8 @@ class CartViewSet(viewsets.ModelViewSet):
 
 ### 주의사항
 
-1. **Node.js 필요**: 서버에 Node.js 18+ 설치 필요 (`node dist/cli.js` 실행)
-2. **빌드 필수**: TypeScript 소스 변경 후 `npm run build` 실행하여 `dist/` 갱신
+1. **Node.js 필요**: 서버에 Node.js 18+ 설치 필요 (npx 포함)
+2. **빌드 필수**: 소스 변경 시 `npm run build` 후 push (npx는 최신 커밋 자동 반영)
 3. **타임아웃 설정**: 대량 데이터 시 계산에 수 초 걸릴 수 있으므로 적절한 타임아웃 설정
 4. **입력 데이터 그대로 사용**: 프론트가 보낸 JSON의 `reports`, `albums` 외 다른 필드(`photobook_id`, `child` 등)는 자동 무시됨
 5. **filter/hiddenIds**: 프론트에서 필터 설정이 있는 경우 `filter`, `hiddenIds` 필드도 함께 전송하면 동일하게 적용됨
