@@ -116,7 +116,9 @@ function buildHiddenIdsFromSelection(reports, albums, existingHiddenIds) {
     return Array.from(hiddenSet);
 }
 function calcPages(input) {
-    const { reports, albums, hiddenIds = [], filter = input.selected_filter_type ?? {}, } = input;
+    const { reports, albums, hiddenIds = [], filter = input.selected_filter_type ??
+        input.user_data?.selected_filter_type ??
+        {}, } = input;
     // 1. 필터 설정 적용 (앨범 제거, 가정 알림장 제거 등)
     const filteredBySettings = {
         reports: filterReports(reports, filter),
