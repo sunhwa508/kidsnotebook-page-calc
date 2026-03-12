@@ -610,15 +610,11 @@ function generatePages(reports, albums, hiddenIds = []) {
     for (const report of reports) {
         if (!report.created)
             continue;
-        if (report.is_day_selected === false)
-            continue;
         const date = (0, kstDate_1.toKstDateString)(report.created);
         const reportId = String(report.id);
         const month = date.substring(0, 7);
         const textHiddenKey = `text-${reportId}-${date}`;
-        const hasVisibleText = report.is_selected !== false &&
-            report.content &&
-            !hiddenSet.has(textHiddenKey);
+        const hasVisibleText = report.content && !hiddenSet.has(textHiddenKey);
         const reportMediaCount = (report.videos?.length ?? 0) + (report.images?.length ?? 0);
         const hasVisibleMedia = reportMediaCount > 0 &&
             Array.from({ length: reportMediaCount }).some((_, idx) => !hiddenSet.has(`report-${reportId}-img-${date}-${idx}`));
@@ -637,7 +633,7 @@ function generatePages(reports, albums, hiddenIds = []) {
             continue;
         }
         builder.startNewMonth(month);
-        const reportTitle = report.is_sent_from_center === false
+        const reportTitle = !report.is_sent_from_center
             ? '가정에서 원으로'
             : '원에서 가정으로';
         builder.setContentType('report', reportId, reportTitle, report.author?.name ?? '', report.weather ?? '', report.life_log);
@@ -683,9 +679,7 @@ function generatePages(reports, albums, hiddenIds = []) {
         if (reportMedia.length > 0) {
             builder.addImages(reportMedia, date, `report-${reportId}-img`);
         }
-        if (report.is_selected !== false) {
-            builder.addText(report.content, date, reportId);
-        }
+        builder.addText(report.content, date, reportId);
         {
             const lifeLogGap = hasVisibleMedia && !hasVisibleText && !hasVisibleComments
                 ? LIFE_LOG_GAP_MEDIA_ONLY
@@ -706,8 +700,6 @@ function generatePages(reports, albums, hiddenIds = []) {
     builder.startNewPage();
     for (const album of albums) {
         if (!album.created)
-            continue;
-        if (album.is_day_selected === false)
             continue;
         const date = (0, kstDate_1.toKstDateString)(album.created);
         const albumId = String(album.id);

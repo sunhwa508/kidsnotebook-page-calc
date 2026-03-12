@@ -112,7 +112,7 @@ const KOREAN_WIDTH_14 = 12.099609375;
 const CJK_FULLWIDTH_14 = 13.125;
 
 const CJK_REGEX =
-  /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uac00-\ud7af]/;
+  /[\u3000-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff01-\uffee\uac00-\ud7af]/;
 const SPACE_REGEX = /^\s+$/;
 const ASCII_WIDTH_SCALE = 0.94;
 const ASCII_LONG_WIDTH_SCALE = 0.92;
@@ -169,9 +169,7 @@ const countLinesByChars = (
   return { lines, lineWidth };
 };
 
-/** 단일 문자의 너비를 14px 기준 테이블에서 조회 후 fontSize로 스케일 */
-function measureCharWidth(char: string, fontSize: number): number {
-  const code = char.charCodeAt(0);
+function measureCodePointWidth(code: number, fontSize: number): number {
   const scale = fontSize / BASE_FONT_SIZE;
 
   // ASCII 32-126
@@ -189,8 +187,11 @@ function measureCharWidth(char: string, fontSize: number): number {
     return KOREAN_WIDTH_14 * scale;
   }
 
-  // 히라가나 (3040-309F), 가타카나 (30A0-30FF)
-  if (code >= 0x3040 && code <= 0x30ff) {
+  // 전각 공백/구두점, 히라가나, 가타카나
+  if (
+    (code >= 0x3000 && code <= 0x30ff) ||
+    (code >= 0xff61 && code <= 0xff9f)
+  ) {
     return CJK_FULLWIDTH_14 * scale;
   }
 
@@ -203,13 +204,16 @@ function measureCharWidth(char: string, fontSize: number): number {
     return CJK_FULLWIDTH_14 * scale;
   }
 
-  // 전각 문자 (FF01-FF60)
-  if (code >= 0xff01 && code <= 0xff60) {
+  // 전각 문자 (FF01-FF60, FFE0-FFEE)
+  if (
+    (code >= 0xff01 && code <= 0xff60) ||
+    (code >= 0xffe0 && code <= 0xffee)
+  ) {
     return CJK_FULLWIDTH_14 * scale;
   }
 
   // 기타 non-ASCII (특수문자, 이모지 등) - 한글 너비를 기본값으로 사용
-  if (code > 127 || char.length > 1) {
+  if (code > 127) {
     return KOREAN_WIDTH_14 * scale;
   }
 
@@ -217,11 +221,48 @@ function measureCharWidth(char: string, fontSize: number): number {
   return 0;
 }
 
+function isZeroWidthCodePoint(code: number): boolean {
+  return (
+    code === 0x200d || // ZWJ
+    (code >= 0x0300 && code <= 0x036f) || // Combining Diacritical Marks
+    (code >= 0x1ab0 && code <= 0x1aff) || // Combining Diacritical Marks Extended
+    (code >= 0x1dc0 && code <= 0x1dff) || // Combining Diacritical Marks Supplement
+    (code >= 0x20d0 && code <= 0x20ff) || // Combining Diacritical Marks for Symbols
+    (code >= 0xfe00 && code <= 0xfe0f) // Variation Selectors
+  );
+}
+
+/** grapheme cluster 기준 너비 계산 */
+function measureCharWidth(char: string, fontSize: number): number {
+  const codePoints = Array.from(char, (value) => value.codePointAt(0) ?? 0);
+
+  if (codePoints.length === 0) return 0;
+  if (codePoints.length === 1) {
+    return measureCodePointWidth(codePoints[0], fontSize);
+  }
+
+  // ZWJ 시퀀스나 regional indicator 조합 등은 렌더상 1개의 이모지 폭으로 취급
+  if (
+    codePoints.includes(0x200d) ||
+    codePoints.every(
+      (code) =>
+        (code >= 0x1f1e6 && code <= 0x1f1ff) || isZeroWidthCodePoint(code),
+    )
+  ) {
+    return measureCodePointWidth(0x1f600, fontSize);
+  }
+
+  const baseCodePoint = codePoints.find((code) => !isZeroWidthCodePoint(code));
+  if (baseCodePoint === undefined) return 0;
+
+  return measureCodePointWidth(baseCodePoint, fontSize);
+}
+
 export function measureTextWidth(text: string, fontSize: number): number {
   if (text.length === 0) return 0;
 
   let width = 0;
-  for (const char of text) {
+  for (const char of splitGraphemes(text)) {
     width += measureCharWidth(char, fontSize);
   }
   return width;

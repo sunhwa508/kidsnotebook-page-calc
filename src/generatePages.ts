@@ -813,16 +813,12 @@ export function generatePages(
 
   for (const report of reports) {
     if (!report.created) continue;
-    if (report.is_day_selected === false) continue;
     const date = toKstDateString(report.created);
     const reportId = String(report.id);
     const month = date.substring(0, 7);
 
     const textHiddenKey = `text-${reportId}-${date}`;
-    const hasVisibleText =
-      report.is_selected !== false &&
-      report.content &&
-      !hiddenSet.has(textHiddenKey);
+    const hasVisibleText = report.content && !hiddenSet.has(textHiddenKey);
     const reportMediaCount =
       (report.videos?.length ?? 0) + (report.images?.length ?? 0);
     const hasVisibleMedia =
@@ -855,7 +851,7 @@ export function generatePages(
     builder.startNewMonth(month);
 
     const reportTitle =
-      report.is_sent_from_center === false
+      !report.is_sent_from_center
         ? '가정에서 원으로'
         : '원에서 가정으로';
     builder.setContentType(
@@ -912,9 +908,7 @@ export function generatePages(
       builder.addImages(reportMedia, date, `report-${reportId}-img`);
     }
 
-    if (report.is_selected !== false) {
-      builder.addText(report.content, date, reportId);
-    }
+    builder.addText(report.content, date, reportId);
 
     {
       const lifeLogGap =
@@ -941,7 +935,6 @@ export function generatePages(
 
   for (const album of albums) {
     if (!album.created) continue;
-    if (album.is_day_selected === false) continue;
     const date = toKstDateString(album.created);
     const albumId = String(album.id);
     const month = date.substring(0, 7);

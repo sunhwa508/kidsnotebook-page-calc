@@ -47,6 +47,20 @@ function buildHiddenIdsFromSelection(reports, albums, existingHiddenIds) {
             continue;
         const date = (0, kstDate_1.toKstDateString)(report.created);
         const reportId = String(report.id);
+        // is_day_selected: false → 해당 날짜의 모든 콘텐츠를 숨김
+        const isDaySelected = report.is_day_selected ?? true;
+        if (!isDaySelected) {
+            hiddenSet.add(`text-${reportId}-${date}`);
+            hiddenSet.add(`life-log-${reportId}-${date}`);
+            const mediaCount = (report.videos?.length ?? 0) + (report.images?.length ?? 0);
+            for (let i = 0; i < mediaCount; i++) {
+                hiddenSet.add(`report-${reportId}-img-${date}-${i}`);
+            }
+            (report.comments ?? []).forEach((_, idx) => {
+                hiddenSet.add(`comment-${reportId}-${date}-${idx}`);
+            });
+            continue;
+        }
         // 텍스트: report.is_selected로 판단
         if (!report.is_selected) {
             hiddenSet.add(`text-${reportId}-${date}`);
@@ -76,6 +90,15 @@ function buildHiddenIdsFromSelection(reports, albums, existingHiddenIds) {
             continue;
         const date = (0, kstDate_1.toKstDateString)(album.created);
         const albumId = String(album.id);
+        // is_day_selected: false → 해당 날짜의 모든 미디어를 숨김
+        const isDaySelected = album.is_day_selected ?? true;
+        if (!isDaySelected) {
+            const mediaCount = (album.videos?.length ?? 0) + (album.images?.length ?? 0);
+            for (let i = 0; i < mediaCount; i++) {
+                hiddenSet.add(`album-${albumId}-img-${date}-${i}`);
+            }
+            continue;
+        }
         // 비디오 썸네일: 개별 is_selected 체크
         (album.videos ?? []).forEach((video, idx) => {
             if (!video.is_selected) {
