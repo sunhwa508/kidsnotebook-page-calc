@@ -372,3 +372,18 @@ class CartViewSet(viewsets.ModelViewSet):
 3. **타임아웃 설정**: 대량 데이터 시 계산에 수 초 걸릴 수 있으므로 적절한 타임아웃 설정
 4. **입력 데이터 그대로 사용**: 프론트가 보낸 JSON의 `reports`, `albums` 외 다른 필드(`photobook_id`, `child` 등)는 자동 무시됨
 5. **filter/hiddenIds**: 프론트에서 필터 설정이 있는 경우 `filter`, `hiddenIds` 필드도 함께 전송하면 동일하게 적용됨
+
+
+## 기여하기(contribution)
+
+### 패키지 배포 (`npm publish`)
+
+`package.json`의 `publishConfig.registry`를 사용합니다.
+
+```bash
+# (필요 시) 사전 로그인
+npm login --registry https://kn-npm.kidsnote.com/
+
+npm run build
+npm publish
+```
